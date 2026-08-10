@@ -1,4 +1,4 @@
-```groovy
+```groovyy
 pipeline {
     agent any
 
