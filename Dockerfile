@@ -25,15 +25,31 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Copy only installed Python packages from builder
+# Install Azure CLI dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release && \
+    curl -sL https://aka.ms/InstallAzureCLIDeb | bash && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages
 COPY --from=builder /install /usr/local
 
 # Copy application files
 COPY app.py .
 COPY templates ./templates
 COPY static ./static
+COPY start.sh .
+
+RUN chmod +x start.sh
+
+# Model location
+ENV MODEL_PATH=/app/models/bt_resnet50_model.pt
 
 EXPOSE 5000
 
-# Start Flask application using Gunicorn
-CMD ["gunicorn", "--workers=2", "--bind=0.0.0.0:5000", "--timeout=120", "app:app"]
+CMD ["./start.sh"]

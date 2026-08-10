@@ -24,7 +24,7 @@ LABELS = ['None', 'Meningioma', 'Glioma', 'Pitutary']
 
 device = "cuda" if is_available() else "cpu"
 
-resnet_model = resnet50(pretrained=True)
+resnet_model = resnet50(weights=None)
 
 for param in resnet_model.parameters():
     param.requires_grad = True
@@ -65,20 +65,28 @@ def get_prediction(image_bytes):
   class_id = argmax(y_hat.data, dim=1)
   return str(int(class_id)), LABELS[int(class_id)]
 
-@app.route('/', methods=['GET'])
-def main():
-    if flask.request.method == 'GET':
-        return(flask.render_template('DiseaseDet.html'))     
 
-@app.route("/uimg",methods=['GET','POST'])
+@app.route('/', methods=['GET', 'HEAD'])
+def main():
+    return flask.render_template('DiseaseDet.html')
+
+
+
+@app.route("/uimg", methods=['GET', 'POST', 'HEAD'])
 def uimg():
-    if flask.request.method == 'GET':
-        return(flask.render_template('uimg.html'))     
+    if flask.request.method in ['GET', 'HEAD']:
+        return flask.render_template('uimg.html')
+
     if flask.request.method == 'POST':
         file = flask.request.files['file']
-        img_bytes = file.read()   
+        img_bytes = file.read()
         class_id, class_name = get_prediction(img_bytes)
-        return(flask.render_template('pred.html',result = class_name,file = file))   
+        return flask.render_template(
+            'pred.html',
+            result=class_name,
+            file=file
+        )
+
       
 @app.errorhandler(500)
 def server_error(error):

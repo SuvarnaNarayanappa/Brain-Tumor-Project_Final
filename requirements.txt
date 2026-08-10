@@ -1,3 +1,5 @@
 flask==3.0.3
 pillow==10.3.0
 gunicorn==22.0.0
+azure-identity
+azure-storage-blob
