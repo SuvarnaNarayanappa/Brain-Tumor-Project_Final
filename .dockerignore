@@ -1,7 +1,9 @@
-venv/
+models/
 __pycache__/
 *.pyc
+.venv/
+venv/
 .git/
+.gitignore
 Brain-Tumor-Test-Images/
-models/
 data/

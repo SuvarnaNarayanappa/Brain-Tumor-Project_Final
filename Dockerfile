@@ -51,5 +51,6 @@ RUN chmod +x start.sh
 ENV MODEL_PATH=/app/models/bt_resnet50_model.pt
 
 EXPOSE 5000
-
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:5000/ || exit 1
 CMD ["./start.sh"]
