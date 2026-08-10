@@ -198,25 +198,6 @@ pipeline {
 =========================================
        DEPLOYMENT SUCCESSFUL
 =========================================
-
-GitHub
-   |
-   v
-Jenkins
-   |
-   +----> Upload .pt -> Azure Blob Storage
-   |
-   +----> Verify Model
-   |
-   +----> Build Docker Image
-   |
-   +----> Push Image -> Azure ACR
-   |
-   +----> Deploy -> bt-app
-   |
-   +----> Health Check
-
-=========================================
 '''
         }
 
@@ -226,10 +207,7 @@ Jenkins
         DEPLOYMENT FAILED
 =========================================
 
-Check the failed Jenkins stage
-and review the Console Output.
 
-=========================================
 '''
         }
     }
