@@ -1,4 +1,3 @@
-```groovyy
 pipeline {
     agent any
 
@@ -25,14 +24,12 @@ pipeline {
 
     stages {
 
-        // 1. Checkout Code
         stage('Checkout Code') {
             steps {
                 echo 'GitHub checkout completed.'
             }
         }
 
-        // 2. Upload Model (.pt)
         stage('Upload Model (.pt)') {
             steps {
                 sh '''
@@ -59,7 +56,6 @@ pipeline {
             }
         }
 
-        // 3. Verify Model
         stage('Verify Model') {
             steps {
                 sh '''
@@ -82,7 +78,6 @@ pipeline {
             }
         }
 
-        // 4. Build Docker Image
         stage('Build Docker Image') {
             steps {
                 sh '''
@@ -102,7 +97,6 @@ pipeline {
             }
         }
 
-        // 5. Login to ACR
         stage('Login to ACR') {
             steps {
                 sh '''
@@ -119,7 +113,6 @@ pipeline {
             }
         }
 
-        // 6. Push Image to ACR
         stage('Push Image to ACR') {
             steps {
                 sh '''
@@ -136,7 +129,6 @@ pipeline {
             }
         }
 
-        // 7. Deploy Container
         stage('Deploy Container') {
             steps {
                 sh '''
@@ -172,7 +164,6 @@ pipeline {
             }
         }
 
-        // 8. Health Check
         stage('Health Check') {
             steps {
                 sh '''
@@ -205,19 +196,26 @@ pipeline {
         success {
             echo '''
 =========================================
-     DEPLOYMENT SUCCESSFUL
+       DEPLOYMENT SUCCESSFUL
 =========================================
+
 GitHub
-   ↓
-Upload .pt → Azure Blob
-   ↓
-Build Docker Image
-   ↓
-Push Image → ACR
-   ↓
-Deploy → bt-app
-   ↓
-Health Check ✓
+   |
+   v
+Jenkins
+   |
+   +----> Upload .pt -> Azure Blob Storage
+   |
+   +----> Verify Model
+   |
+   +----> Build Docker Image
+   |
+   +----> Push Image -> Azure ACR
+   |
+   +----> Deploy -> bt-app
+   |
+   +----> Health Check
+
 =========================================
 '''
         }
@@ -225,13 +223,14 @@ Health Check ✓
         failure {
             echo '''
 =========================================
-     DEPLOYMENT FAILED
+        DEPLOYMENT FAILED
 =========================================
-Check the failed Jenkins stage and
-review the Console Output.
+
+Check the failed Jenkins stage
+and review the Console Output.
+
 =========================================
 '''
         }
     }
 }
-```
