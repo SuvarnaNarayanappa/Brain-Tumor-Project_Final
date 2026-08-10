@@ -1,18 +1,23 @@
+```groovy
 pipeline {
     agent any
 
     environment {
+        // Azure Blob Storage
         STORAGE_ACCOUNT   = 'btbrainmodel2026'
         STORAGE_CONTAINER = 'btcont'
         MODEL_BLOB        = 'models/bt_resnet50_model.pt'
 
+        // Model location on Azure VM
         SOURCE_MODEL = '/home/azureuser/Brain-Tumor-Project/models/bt_resnet50_model.pt'
 
+        // Azure Container Registry
         ACR_NAME   = 'btbrainacr2026'
         ACR_LOGIN  = 'btbrainacr2026.azurecr.io'
         IMAGE_NAME = 'brain-tumor-detection'
         IMAGE_TAG  = 'latest'
 
+        // Docker container
         CONTAINER_NAME = 'bt-app'
         HOST_PORT      = '5000'
         CONTAINER_PORT = '5000'
@@ -20,32 +25,26 @@ pipeline {
 
     stages {
 
-        stage('Checkout') {
+        // 1. Checkout Code
+        stage('Checkout Code') {
             steps {
-                echo 'GitHub checkout successful'
+                echo 'GitHub checkout completed.'
             }
         }
 
-        stage('Azure Login') {
+        // 2. Upload Model (.pt)
+        stage('Upload Model (.pt)') {
             steps {
                 sh '''
-                    echo "Logging in to Azure..."
+                    set -e
 
-                    az login --identity --allow-no-subscriptions
-
-                    echo "Azure login successful."
-                '''
-            }
-        }
-
-        stage('Upload Model to Azure Blob') {
-            steps {
-                sh '''
-                    echo "Checking model..."
+                    echo "========================================="
+                    echo "Checking .pt model"
+                    echo "========================================="
 
                     ls -lh "$SOURCE_MODEL"
 
-                    echo "Uploading model to Azure Blob..."
+                    echo "Uploading model to Azure Blob Storage..."
 
                     az storage blob upload \
                       --account-name "$STORAGE_ACCOUNT" \
@@ -55,15 +54,20 @@ pipeline {
                       --auth-mode login \
                       --overwrite
 
-                    echo "Model upload completed."
+                    echo "Model upload completed successfully."
                 '''
             }
         }
 
-        stage('Verify Blob') {
+        // 3. Verify Model
+        stage('Verify Model') {
             steps {
                 sh '''
-                    echo "Verifying model in Azure Blob..."
+                    set -e
+
+                    echo "========================================="
+                    echo "Verifying .pt model in Azure Blob Storage"
+                    echo "========================================="
 
                     az storage blob show \
                       --account-name "$STORAGE_ACCOUNT" \
@@ -72,14 +76,21 @@ pipeline {
                       --auth-mode login \
                       --query "{Name:name,Size:properties.contentLength}" \
                       -o table
+
+                    echo "Model verification completed successfully."
                 '''
             }
         }
 
+        // 4. Build Docker Image
         stage('Build Docker Image') {
             steps {
                 sh '''
-                    echo "Building Docker image..."
+                    set -e
+
+                    echo "========================================="
+                    echo "Building Docker image"
+                    echo "========================================="
 
                     docker build \
                       -t "$ACR_LOGIN/$IMAGE_NAME:$IMAGE_TAG" .
@@ -91,10 +102,15 @@ pipeline {
             }
         }
 
+        // 5. Login to ACR
         stage('Login to ACR') {
             steps {
                 sh '''
-                    echo "Logging in to Azure Container Registry..."
+                    set -e
+
+                    echo "========================================="
+                    echo "Logging in to Azure Container Registry"
+                    echo "========================================="
 
                     az acr login --name "$ACR_NAME"
 
@@ -103,10 +119,15 @@ pipeline {
             }
         }
 
-        stage('Push to ACR') {
+        // 6. Push Image to ACR
+        stage('Push Image to ACR') {
             steps {
                 sh '''
-                    echo "Pushing Docker image to ACR..."
+                    set -e
+
+                    echo "========================================="
+                    echo "Pushing Docker image to ACR"
+                    echo "========================================="
 
                     docker push "$ACR_LOGIN/$IMAGE_NAME:$IMAGE_TAG"
 
@@ -115,9 +136,16 @@ pipeline {
             }
         }
 
+        // 7. Deploy Container
         stage('Deploy Container') {
             steps {
                 sh '''
+                    set -e
+
+                    echo "========================================="
+                    echo "Deploying Brain Tumor application"
+                    echo "========================================="
+
                     echo "Stopping old container if it exists..."
 
                     docker rm -f "$CONTAINER_NAME" 2>/dev/null || true
@@ -144,12 +172,21 @@ pipeline {
             }
         }
 
+        // 8. Health Check
         stage('Health Check') {
             steps {
                 sh '''
+                    set -e
+
+                    echo "========================================="
+                    echo "Checking application health"
+                    echo "========================================="
+
                     echo "Waiting for application to become healthy..."
 
                     sleep 15
+
+                    echo "Container status:"
 
                     docker inspect "$CONTAINER_NAME" \
                       --format '{{.State.Status}} | {{.State.Health.Status}}'
@@ -166,15 +203,35 @@ pipeline {
 
     post {
         success {
-            echo '========================================='
-            echo 'Brain Tumor application deployed successfully!'
-            echo '========================================='
+            echo '''
+=========================================
+     DEPLOYMENT SUCCESSFUL
+=========================================
+GitHub
+   ↓
+Upload .pt → Azure Blob
+   ↓
+Build Docker Image
+   ↓
+Push Image → ACR
+   ↓
+Deploy → bt-app
+   ↓
+Health Check ✓
+=========================================
+'''
         }
 
         failure {
-            echo '========================================='
-            echo 'Deployment failed. Check the Jenkins console log.'
-            echo '========================================='
+            echo '''
+=========================================
+     DEPLOYMENT FAILED
+=========================================
+Check the failed Jenkins stage and
+review the Console Output.
+=========================================
+'''
         }
     }
 }
+```
