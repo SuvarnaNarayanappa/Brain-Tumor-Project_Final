@@ -59,5 +59,22 @@ pipeline {
                 '''
             }
         }
+
+
+
+                  stage('Build Docker Image') {
+            steps {
+                sh '''
+                    echo "Building Docker image..."
+
+                    docker build \
+                      -t brain-tumor-detection:latest .
+
+                    echo "Docker image built successfully."
+
+                    docker images brain-tumor-detection:latest
+                '''
+            }
+        }
     }
 }
