@@ -30,6 +30,33 @@ pipeline {
             }
         }
 
+          
+
+       stage('SonarQube Analysis') {
+    steps {
+        echo '========================================='
+        echo 'Running SonarQube code analysis'
+        echo '========================================='
+
+        withSonarQubeEnv('SonarQube') {
+            script {
+                def scannerHome = tool 'SonarScanner'
+
+                sh """
+                    set -e
+
+                    ${scannerHome}/bin/sonar-scanner \
+                      -Dsonar.projectKey=brain-tumor-project \
+                      -Dsonar.projectName=Brain-Tumor-Project \
+                      -Dsonar.sources=. \
+                      -Dsonar.exclusions="venv/**,models/**,*.pt,__pycache__/**,.git/**"
+                """
+            }
+        }
+
+        echo 'SonarQube analysis completed.'
+    }
+}
         stage('Upload Model (.pt)') {
             steps {
                 sh '''
